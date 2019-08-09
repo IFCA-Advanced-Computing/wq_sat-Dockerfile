@@ -2,9 +2,8 @@
 # Distributed under the terms of the Modified BSD License.
 
 # Base image
-# Ubuntu 18.04
-FROM ubuntu:18.04
-
+# Indigodatacloud/ubuntu-sshd:16.04
+FROM indigodatacloud/ubuntu-sshd:16.04
 RUN ls
 
 MAINTAINER Daniel Garcia Diaz <garciad@ifca.unican.es>
