@@ -58,6 +58,13 @@ RUN apt-get install libpnetcdf-dev gdal-bin python3-gdal libgdal20 rabbitmq-serv
 
 RUN ls
 
+RUN exec 3<> /etc/apt/sources.list.d/onedata.list && \
+    echo "deb [arch=amd64] http://packages.onedata.org/apt/ubuntu/xenial xenial main" >&3 && \
+    echo "deb-src [arch=amd64] http://packages.onedata.org/apt/ubuntu/xenial xenial main" >&3 && \
+    exec 3>&-
+RUN apt-get update
+RUN apt-get install sudo oneclient curl --allow-unauthenticated -y
+
 RUN git clone https://github.com/IFCA/xdc_lfw_sat.git
 
 ## Create config file
