@@ -64,6 +64,8 @@ RUN exec 3<> /etc/apt/sources.list.d/onedata.list && \
 RUN apt-get update
 RUN apt-get install sudo oneclient curl --allow-unauthenticated -y
 
+RUN ls
+
 RUN git clone https://github.com/IFCA/xdc_lfw_sat.git
 
 ## Create config file
