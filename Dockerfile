@@ -48,14 +48,16 @@ RUN apt-get install gcc git build-essential mysql-client python3-setuptools libm
 #    tar -zxvf netcdf-4.4.0.tar.gz && \
 #    rm netcdf-4.4.0.tar.gz
 #RUN cd netcdf-4.4.0 && ./configure --disable-netcdf-4 --prefix=/usr/local && make && make install
-RUN apt-get install netcdf
+RUN apt-get install gcc gfortran g++
+RUN apt-get install libnetcdf-dev libnetcdff-dev
+RUN apt-get install netcdf-bin
 
 ENV NETCDF_LIBS -I/usr/local/lib
 ENV NETCDF_CFLAGS -I/usr/local/include
 RUN apt-get install software-properties-common -y
 RUN add-apt-repository ppa:ubuntugis/ubuntugis-unstable
 RUN apt-get update -y
-RUN apt-get install libpnetcdf-dev gdal-bin python3-gdal libgdal20 rabbitmq-server -y
+RUN apt-get install gdal-bin python3-gdal libgdal20 rabbitmq-server -y
 
 RUN ls
 
