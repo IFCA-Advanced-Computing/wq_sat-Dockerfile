@@ -44,10 +44,12 @@ RUN apt-get install -y  libxml2-dev libxslt-dev
 RUN apt-get update && apt-get install -y iputils-ping net-tools
 RUN apt-get install gcc git build-essential mysql-client python3-setuptools libmysqlclient-dev python3-dev python3-numpy python3-pip libhdf5-serial-dev netcdf-bin libnetcdf-dev wget m4 -y
 
-RUN wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.4.0.tar.gz && \
-    tar -zxvf netcdf-4.4.0.tar.gz && \
-    rm netcdf-4.4.0.tar.gz
-RUN cd netcdf-4.4.0 && ./configure --disable-netcdf-4 --prefix=/usr/local && make && make install
+#RUN wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.4.0.tar.gz && \
+#    tar -zxvf netcdf-4.4.0.tar.gz && \
+#    rm netcdf-4.4.0.tar.gz
+#RUN cd netcdf-4.4.0 && ./configure --disable-netcdf-4 --prefix=/usr/local && make && make install
+RUN apt-get install netcdf
+
 ENV NETCDF_LIBS -I/usr/local/lib
 ENV NETCDF_CFLAGS -I/usr/local/include
 RUN apt-get install software-properties-common -y
