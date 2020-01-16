@@ -48,7 +48,7 @@ RUN apt-get install gcc git build-essential mysql-client python3-setuptools libm
 #    tar -zxvf netcdf-4.4.0.tar.gz && \
 #    rm netcdf-4.4.0.tar.gz
 #RUN cd netcdf-4.4.0 && ./configure --disable-netcdf-4 --prefix=/usr/local && make && make install
-RUN apt-get install gcc gfortran g++
+#RUN apt-get install gcc gfortran g++
 RUN apt-get install libnetcdf-dev libnetcdff-dev
 RUN apt-get install netcdf-bin
 
