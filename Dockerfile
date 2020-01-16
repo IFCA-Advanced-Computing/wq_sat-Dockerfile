@@ -51,7 +51,9 @@ RUN apt-get install gcc git build-essential mysql-client python3-setuptools libm
 #RUN apt-get install gcc gfortran g++
 #RUN apt-get install libnetcdf-dev libnetcdff-dev
 #RUN apt-get install netcdf-bin
-RUN pip install netCDF4
+#RUN pip install netCDF4
+RUN apt-get update -y
+RUN apt-get install -y python3-netcdf4
 
 ENV NETCDF_LIBS -I/usr/local/lib
 ENV NETCDF_CFLAGS -I/usr/local/include
