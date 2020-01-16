@@ -19,15 +19,13 @@ RUN  apt-get update && \
   apt-get install -y curl python3-setuptools python-pip
 
 RUN pip install --upgrade pip
-RUN apt-get install python3-pip
 
 ## Install ftp and Faker
 RUN  apt-get update && \
   apt-get -y upgrade && \
   apt-get install -y ftp
 
-RUN pip install opencv-python Faker
-RUN pip3 install tqdm requests
+RUN pip install opencv-python Faker tqdm requests
 
 ## Install openstack client for python3
 ENV TZ=Europe/Minsk
