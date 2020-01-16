@@ -19,7 +19,7 @@ RUN  apt-get update && \
   apt-get install -y curl python3-setuptools python-pip
 
 RUN pip install --upgrade pip
-
+RUN apt-get install python3-pip
 
 ## Install ftp and Faker
 RUN  apt-get update && \
@@ -27,7 +27,7 @@ RUN  apt-get update && \
   apt-get install -y ftp
 
 RUN pip install opencv-python Faker
-
+RUN pip3 install tqdm requests
 
 ## Install openstack client for python3
 ENV TZ=Europe/Minsk
@@ -36,7 +36,6 @@ RUN apt-get update
 RUN apt-get install -y libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev
 
 RUN apt-get install -y python python-pip python-tk
-
 
 ## Install tools for datamining
 RUN apt-get install -y  libxml2-dev libxslt-dev
