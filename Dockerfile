@@ -25,7 +25,7 @@ RUN  apt-get update && \
   apt-get -y upgrade && \
   apt-get install -y ftp
 
-RUN pip install opencv-python Faker tqdm requests
+RUN pip install opencv-python Faker requests
 
 ## Install openstack client for python3
 ENV TZ=Europe/Minsk
