@@ -41,6 +41,7 @@ RUN apt-get install -y  libxml2-dev libxslt-dev
 RUN apt-get update && apt-get install -y iputils-ping net-tools
 RUN apt-get install gcc git build-essential mysql-client python3-setuptools libmysqlclient-dev python3-dev python3-numpy python3-pip libhdf5-serial-dev netcdf-bin libnetcdf-dev wget m4 -y
 
+## Install netCDF4
 #RUN wget ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.4.0.tar.gz && \
 #    tar -zxvf netcdf-4.4.0.tar.gz && \
 #    rm netcdf-4.4.0.tar.gz
