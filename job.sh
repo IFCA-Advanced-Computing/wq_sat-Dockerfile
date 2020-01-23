@@ -9,7 +9,7 @@ OUTPUTDIR="/onedata/output/$ONEDATA_SPACE/"
 #python3 xdc_lfw_sat/sat_server/xdc_lfw_sat.py -sd $START_DATE -ed $END_DATE -reg $REGION --coord $COORD -sat $SAT -path "$OUTPUTDIR"
 
 # Run
-$python3 xdc_lfw_sat/sat_server/xdc_lfw_sat.py -sd $START_DATE -ed $END_DATE -reg $REGION --coord $COORD -sat $SAT -path "$OUTPUTDIR" $argfile > "$OUTPUTDIR"/satellite_output.log
+python3 xdc_lfw_sat/sat_server/xdc_lfw_sat.py -sd $START_DATE -ed $END_DATE -reg $REGION --coord $COORD -sat $SAT -path "$OUTPUTDIR" $argfile > "$OUTPUTDIR"/satellite_output.log
 
 #mv  "$SAT_PATH"/ "$OUTPUTDIR"
 echo End at $(date)
