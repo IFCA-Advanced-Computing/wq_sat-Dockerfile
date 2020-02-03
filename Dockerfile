@@ -2,8 +2,11 @@
 # Distributed under the terms of the Modified BSD License.
 
 # Base image
-# Indigodatacloud/ubuntu-sshd:16.04
-#FROM indigodatacloud/ubuntu-sshd:16.04
+# osgeo/gdal:ubuntu-small
+# This file is available at the option of the licensee under:
+# Public domain
+# or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
+# https://github.com/OSGeo/gdal/blob/master/gdal/docker/ubuntu-small/Dockerfile
 FROM osgeo/gdal:ubuntu-small-latest
 
 MAINTAINER Daniel Garcia Diaz <garciad@ifca.unican.es>
@@ -60,3 +63,5 @@ RUN exec 3<> ./xdc_lfw_sat/sat_modules/config.py && \
 RUN cd ./xdc_lfw_sat && \
     python3 setup.py install
 
+## Install requests
+RUN pip3 install requests
