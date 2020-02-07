@@ -36,9 +36,11 @@ RUN curl http://packages.onedata.org/onedata.gpg.key | apt-key add -
 RUN apt-get update && curl http://packages.onedata.org/onedata.gpg.key | apt-key add -
 RUN apt-get install oneclient -y
 
+# What user branch to clone (!)
+ARG branch=master
 
 ## git clone and Install sat package
-RUN git clone https://github.com/IFCA/xdc_lfw_sat.git
+RUN git clone -b $branch https://github.com/IFCA/xdc_lfw_sat.git
 
 ## Create config file
 RUN exec 3<> ./xdc_lfw_sat/sat_modules/config.py && \
