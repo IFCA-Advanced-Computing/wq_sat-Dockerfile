@@ -2,12 +2,12 @@
 # Distributed under the terms of the Modified BSD License.
 
 # Base image
-# osgeo/gdal:ubuntu-small
+# osgeo/gdal:ubuntu-full-latest
 # This file is available at the option of the licensee under:
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 # https://github.com/OSGeo/gdal/blob/master/gdal/docker/ubuntu-small/Dockerfile
-FROM osgeo/gdal:ubuntu-small-latest
+FROM osgeo/gdal:ubuntu-full-latest
 
 MAINTAINER Daniel Garcia Diaz <garciad@ifca.unican.es>
 LABEL version='0.0.1'
