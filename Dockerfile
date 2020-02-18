@@ -39,6 +39,8 @@ RUN apt-get install oneclient -y
 # What user branch to clone (!)
 ARG branch=master
 
+RUN ls
+
 ## git clone and Install sat package
 RUN git clone -b $branch https://github.com/IFCA/xdc_lfw_sat.git
 
