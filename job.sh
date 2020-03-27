@@ -6,8 +6,10 @@ ONECLIENT_AUTHORIZATION_TOKEN="$INPUT_ONEDATA_TOKEN" PROVIDER_HOSTNAME="$ONEDATA
 echo Start at $(date)
 
 OUTPUTDIR="/onedata/output/$ONEDATA_SPACE/"
+#OUTPUTDIR=$SAT_PATH
 
 # Run
-python3 xdc_lfw_sat/sat_server/xdc_lfw_sat.py -sat_args $SAT_ARGS -path "$OUTPUTDIR" $argfile > "$OUTPUTDIR""$REGION"/satellite_"$START_DATE"_"$END_DATE"_output.log
+python3 wq_sat/wq_server/main.py -sat_args $SAT_ARGS -path "$OUTPUTDIR" $argfile > "$OUTPUTDIR""$REGION"/satellite_"$START_DATE"_"$END_DATE"_output.log
+#python3 wq_sat/wq_server/main.py -sat_args $SAT_ARGS -path "$OUTPUTDIR"
 
 echo End at $(date)

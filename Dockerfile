@@ -1,28 +1,29 @@
-# Copyright (c) Jupyter Development Team.
-# Distributed under the terms of the Modified BSD License.
+# Dockerfile may have two Arguments: tag, branch
+# tag - tag for the Base image, (e.g. 1.14.0-py3 for tensorflow)
+# branch - user repository branch to clone (default: master, other option: test)
+ARG tag=1.14.0-py3
 
-# Base image
-# osgeo/gdal:ubuntu-full-latest
-# This file is available at the option of the licensee under:
-# Public domain
-# or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
-# https://github.com/OSGeo/gdal/blob/master/gdal/docker/ubuntu-small/Dockerfile
-FROM osgeo/gdal:ubuntu-full-latest
+# Base image, e.g. tensorflow/tensorflow:tag
+FROM tensorflow/tensorflow:${tag}
 
-MAINTAINER Daniel Garcia Diaz <garciad@ifca.unican.es>
+MAINTAINER Daniel Garcia Diaz (IFCA) <garciad@ifca.unican.es>
 LABEL version='0.0.1'
-## A project to provide data from Sentinel-2 or Landsat 8 satellite
-## A project to perform super-resolution on satellite imagery
+## Project to provide data from Sentinel-2 or Landsat 8 satellite
+## Project to perform super-resolution on satellite imagery
 
-
-## Install
+## Install tools
 RUN  apt-get update && \
   apt-get install -y --reinstall build-essential && \
     apt-get install -y git && \
-    apt-get install -y curl python3-setuptools python3-pip
+    apt-get install -y curl python3-setuptools python3-pip python3-wheel
 
 
-## Install netCDF4
+## Install spatial packages (python APIs)
+#Install gdal
+RUN apt update && \
+  apt install -y gdal-bin python3-gdal
+
+# Install netCDF4
 RUN apt-get update -y
 RUN apt-get install -y python3-netcdf4
 
@@ -36,14 +37,18 @@ RUN curl http://packages.onedata.org/onedata.gpg.key | apt-key add -
 RUN apt-get update && curl http://packages.onedata.org/onedata.gpg.key | apt-key add -
 RUN apt-get install oneclient -y
 
+## GitHUB Repositories
+RUN mkdir wq_sat
+
 # What user branch to clone (!)
 ARG branch=master
 
 ## git clone and Install sat package
-RUN git clone -b $branch https://github.com/IFCA/xdc_lfw_sat.git
+RUN cd ./wq_sat && \
+    git clone https://github.com/garciadd/sat.git
 
 ## Create config file
-RUN exec 3<> ./xdc_lfw_sat/sat_modules/config.py && \
+RUN exec 3<> ./wq_sat/sat/sat_modules/config.py && \
     echo "#imports apis" >&3 && \
     echo "import os" >&3 && \
     echo "" >&3 && \
@@ -53,17 +58,26 @@ RUN exec 3<> ./xdc_lfw_sat/sat_modules/config.py && \
     echo "" >&3 && \
     echo "#Landsat credentials" >&3 && \
     echo "landsat_pass = {'username':\"lifewatch\", 'password':\"xdc_lfw_data2018\"}" >&3 && \
-    echo "" >&3 && \
-    echo "" >&3 && \
-    echo "#available regions" >&3 && \
-    echo "regions = {'CdP': {\"id\": 210788, \"coordinates\": {\"W\":-2.830, \"S\":41.820, \"E\":-2.690, \"N\":41.910}}, 'Cogotas': {\"id\": 214571, \"coordinates\": {\"W\":-4.728, \"S\":40.657, \"E\":-4.672, \"N\":40.731}}, 'Sanabria': {\"id\": 211645, \"coordinates\": {\"W\":-6.739, \"S\":42.107, \"E\":-6.689, \"N\":42.136}}}"  >&3 && \
-    echo "" >&3 && \
     exec 3>&-
 
-
 ## api installation
-RUN cd ./xdc_lfw_sat && \
+RUN cd ./wq_sat/sat && \
     python3 setup.py install
 
-## Install requests
-RUN pip3 install requests
+# clone and Install satsr package
+RUN cd ./wq_sat && \
+    git clone -b $branch https://github.com/deephdc/satsr && \
+    cd  satsr && \
+    pip3 install -e .
+
+
+# clone and Install atcor package
+RUN cd ./wq_sat && \
+    git clone -b $branch https://github.com/garciadd/atcor.git && \
+    cd  atcor && \
+    python3 setup.py install
+
+
+# clone and Install atcor package
+RUN cd ./wq_sat && \
+    git clone -b $branch https://github.com/garciadd/wq_server.git
