@@ -50,10 +50,6 @@ RUN cd ./wq_sat && \
 
 ## Create config file
 RUN exec 3<> ./wq_sat/sat/sat_modules/config.py && \
-    echo "#imports apis" >&3 && \
-    echo "import os" >&3 && \
-    echo "" >&3 && \
-    echo "" >&3 && \
     echo "#Sentinel credentials" >&3 && \
     echo "sentinel_pass = {'username':\"lifewatch\", 'password':\"xdc_lfw_data\"}" >&3 && \
     echo "" >&3 && \
