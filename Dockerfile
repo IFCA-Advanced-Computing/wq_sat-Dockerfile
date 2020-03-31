@@ -37,6 +37,7 @@ RUN curl http://packages.onedata.org/onedata.gpg.key | apt-key add -
 RUN apt-get update && curl http://packages.onedata.org/onedata.gpg.key | apt-key add -
 RUN apt-get install oneclient -y
 
+RUN ls
 ## GitHUB Repositories
 RUN mkdir wq_sat
 
