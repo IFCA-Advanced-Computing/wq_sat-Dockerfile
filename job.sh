@@ -1,7 +1,7 @@
 env
 mkdir -p /onedata/output
 
-ONECLIENT_AUTHORIZATION_TOKEN="$INPUT_ONEDATA_TOKEN" PROVIDER_HOSTNAME="$ONEDATA_PROVIDERS" oneclient --no_check_certificate --authentication token -o rw /onedata/output || exit 1
+ONECLIENT_AUTHORIZATION_TOKEN="$INPUT_ONEDATA_TOKEN" ONECLIENT_PROVIDER_HOSTNAME="$ONEDATA_PROVIDERS" oneclient --no_check_certificate --authentication token -o rw /onedata/output || exit 1
 
 echo Start at $(date)
 
