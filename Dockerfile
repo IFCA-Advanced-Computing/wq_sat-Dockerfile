@@ -35,9 +35,8 @@ RUN exec 3<> /etc/apt/sources.list.d/onedata.list && \
     exec 3>&-
 RUN curl http://packages.onedata.org/onedata.gpg.key | apt-key add -
 RUN apt-get update && curl http://packages.onedata.org/onedata.gpg.key | apt-key add -
-RUN apt-get install oneclient -y
+RUN apt-get install oneclient=19.02.0.rc2-1~xenial -y
 
-RUN ls
 ## GitHUB Repositories
 RUN mkdir wq_sat
 
