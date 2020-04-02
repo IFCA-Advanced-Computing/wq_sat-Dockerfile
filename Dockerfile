@@ -27,6 +27,8 @@ RUN apt update && \
 RUN apt-get update -y
 RUN apt-get install -y python3-netcdf4
 
+## Python package
+RUN pip3 install xmltodict
 
 ## Onedata
 RUN exec 3<> /etc/apt/sources.list.d/onedata.list && \
