@@ -56,7 +56,7 @@ RUN exec 3<> ./wq_sat/sat/sat_modules/config.py && \
     echo "onedata_api = \"$ONEDATA_API\"" >&3 && \
     echo "onedata_user = \"user\"" >&3 && \
     echo "onedata_space = \"$ONEDATA_SPACE\"" >&3 && \
-    echo "datasets_path = \"/onedata/output/LifeWatch"" >&3 && \
+    echo "datasets_path = \"/onedata/output/LifeWatch\"" >&3 && \
     echo "" >&3 && \
     echo "" >&3 && \
     echo "#Sentinel credentials" >&3 && \
