@@ -9,7 +9,7 @@ OUTPUTDIR="/onedata/output/$ONEDATA_SPACE/$REGION/"
 #OUTPUTDIR=$SAT_PATH
 
 # Run
-python3 wq_sat/wq_server/main.py -sat_args $SAT_ARGS -path "$OUTPUTDIR" $argfile > "$OUTPUTDIR""$REGION"/satellite_"$START_DATE"_"$END_DATE"_output.log
+python3 wq_sat/wq_server/main.py -sat_args $SAT_ARGS -path "$OUTPUTDIR" $argfile > "$OUTPUTDIR"/satellite_"$START_DATE"_"$END_DATE"_output.log
 #python3 wq_sat/wq_server/main.py -sat_args $SAT_ARGS -path "$OUTPUTDIR"
 
 echo End at $(date)
