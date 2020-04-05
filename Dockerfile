@@ -39,10 +39,10 @@ RUN curl http://packages.onedata.org/onedata.gpg.key | apt-key add -
 RUN apt-get update && curl http://packages.onedata.org/onedata.gpg.key | apt-key add -
 RUN apt-get install oneclient=19.02.0.rc2-1~xenial -y
 
-RUN ls
-
 ## GitHUB Repositories
 RUN mkdir wq_sat
+
+RUN ls
 
 # What user branch to clone (!)
 ARG branch=master
@@ -57,9 +57,9 @@ RUN exec 3<> ./wq_sat/sat/sat_modules/config.py && \
     echo "onedata_mode = 1" >&3 && \
     echo "onedata_token = \"$ONEDATA_TOKEN\"" >&3 && \
     echo "onedata_url = \"https://cloud-90-147-75-163.cloud.ba.infn.it\"" >&3 && \
-    echo "onedata_api = \"$ONEDATA_API\"" >&3 && \
+    echo "onedata_api = \"/api/v3/oneprovider/\"" >&3 && \
     echo "onedata_user = \"user\"" >&3 && \
-    echo "onedata_space = \"$ONEDATA_SPACE\"" >&3 && \
+    echo "onedata_space = \"LifeWatch\"" >&3 && \
     echo "datasets_path = \"/onedata/output/LifeWatch\"" >&3 && \
     echo "#Sentinel credentials" >&3 && \
     echo "sentinel_pass = {'username':\"lifewatch\", 'password':\"xdc_lfw_data\"}" >&3 && \
