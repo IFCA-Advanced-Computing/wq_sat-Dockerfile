@@ -39,10 +39,10 @@ RUN curl http://packages.onedata.org/onedata.gpg.key | apt-key add -
 RUN apt-get update && curl http://packages.onedata.org/onedata.gpg.key | apt-key add -
 RUN apt-get install oneclient=19.02.0.rc2-1~xenial -y
 
-RUN ls
-
 ## GitHUB Repositories
 RUN mkdir wq_sat
+
+RUN ls
 
 # What user branch to clone (!)
 ARG branch=master
