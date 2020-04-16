@@ -6,6 +6,7 @@ Date: August 2018
 """
 #APIs
 import os
+import glob
 import requests
 import argparse
 import json
@@ -26,7 +27,7 @@ from IPython.display import display
 from IPython.display import clear_output
 
 def get_coordinates(coord):
-            
+
     W = np.round(coord[0][0] - 360, 3)
     S = np.round(coord[0][-1], 3)
     E = np.round(coord[2][0] - 360, 3)
@@ -67,15 +68,15 @@ def launch_orchestrator_sat_job(sat_args):
 
     with open(tosca_file, 'r') as myfile:
         tosca = myfile.read()
-    
+
     sat = json.dumps(sat_args)
     sat = sat.replace(" ", "")
-    
+
     data = {"parameters" : {   
                 "cpus" : 1,
                 "mem" : "8192 MB",
-                "onedata_provider" : "cloud-90-147-75-163.cloud.ba.infn.it",
-                "sat_space_name" : "LifeWatch",
+                "onedata_provider" : "vm027.pub.cloud.ifca.es",
+                "sat_space_name" : "XDC_LifeWatch",
                 "sat_args" : sat,
                 "region" : sat_args['region'],
                 "start_date" : sat_args['start_date'],
@@ -98,7 +99,7 @@ def launch_orchestrator_sat_job(sat_args):
     deployment_id = json.loads(r.content)['uuid']
     print("Deployment ID: %s" % deployment_id)
     return deployment_id
-    
+
 def orchestrator_job_status(deployment_id):
     #TODO manage exceptions
     access_token = get_access_token('https://iam.extreme-datacloud.eu/token')
@@ -117,7 +118,7 @@ def orchestrator_list_deployments(orchestrator_url):
     access_token = get_access_token('https://iam.extreme-datacloud.eu/token')
     if orchestrator_url is None:
         orchestrator_url = 'https://xdc-paas.cloud.ba.infn.it/orchestrator/'
-    
+
     url = orchestrator_url + 'deployments?createdBy=' + os.environ['JUPYTERHUB_USER'] + '@https://iam.extreme-datacloud.eu/'
     headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer '+access_token}
     r = requests.get(url, headers=headers) #GET
@@ -125,9 +126,9 @@ def orchestrator_list_deployments(orchestrator_url):
 
 
 def find_dataset_type(start_date,end_date,typ,onedata_token):
-    
+
     access_token = get_access_token('https://iam.extreme-datacloud.eu/token')
-    
+
     headers = {"X-Auth-Token": onedata_token}
     url = 'https://cloud-90-147-75-163.cloud.ba.infn.it/api/v3/oneprovider/spaces/17d670040b30511bc4848cab56449088'
     r = requests.get(url, headers=headers)
@@ -214,23 +215,23 @@ def namebutton_clicked(namebutton):
     #load the downloaded files
     with open('regions.json') as file:
         regions = json.load(file)
-    
+
     if name.value in regions:
-        
+
         coord = regions[name.value]["coordinates"]
-        
+
         inidate = (ini_date.value).strftime('%Y-%m-%d')
         enddate = (end_date.value).strftime('%Y-%m-%d')
-            
+
         sat_args ={"start_date":inidate,
                    "end_date":enddate,
                    "region":name.value,
                    "coordinates":coord,
                    "cloud":cloud.value,
                    "sat_type":satellite.value}
-        
+
         launch_orchestrator_sat_job(sat_args)
-    
+
     else:
 
         ingestion = VBox(children=[mapgrid, out])
@@ -239,12 +240,12 @@ def namebutton_clicked(namebutton):
 namebutton.on_click(namebutton_clicked)
 
 def mapbutton_clicked(mapbutton):
-    
+
     coord = get_coordinates(draw_control.last_draw['geometry']['coordinates'][0])
 
     inidate = (ini_date.value).strftime('%Y-%m-%d')
     enddate = (end_date.value).strftime('%Y-%m-%d')
-            
+
     sat_args ={"start_date":inidate,
                "end_date":enddate,
                "region":name.value,
@@ -253,7 +254,7 @@ def mapbutton_clicked(mapbutton):
                "sat_type":satellite.value}
 
     launch_orchestrator_sat_job(sat_args)
-    
+
 mapbutton.on_click(mapbutton_clicked)
 
 ######################################
@@ -293,8 +294,8 @@ status = VBox(children=[selection_jobs, button2, out2])
 
 ######################################## Utils ##########################################
 
-path = '/home/jovyan/datasets/LifeWatch'
-        
+path = '/home/jovyan/onedata/output/XDC_LifeWatch'
+
 paths = {'main_path': path}
 
 ##################################### Functions for display Monochromatic band #########################################
@@ -336,16 +337,18 @@ def file_on_change(v):
     global out_plot
     clear_output()
     
-    list_files = os.listdir(paths['file_path'])
+    list_files = names = [os.path.basename(x) for x in glob.glob("{}/*.nc".format(paths['region_path']))]
+    list_files.sort()
+    
     file = widgets.Dropdown(options=[list_files[n] for n in range(len(list_files))],
                             value = v['new'],
                             description='files:',)
     
     file.observe(file_on_change, names='value')
     
-    top_box = HBox([date, file])
+    top_box = HBox([file])
         
-    band_path = os.path.join(paths['file_path'], v['new'])    
+    band_path = os.path.join(paths['region_path'], v['new'])    
     paths['band_path'] = band_path
     
     dataset= Dataset(paths['band_path'], 'r', format='NETCDF4_CLASSIC')
@@ -371,28 +374,6 @@ def file_on_change(v):
     visualization.children = [vbox, RGB_image, animation]
     user_interface.children = [ingestion, status, visualization]
     display(user_interface)
-    
-
-def date_on_change(v):
-    
-    clear_output()
-    
-    file_path = os.path.join(paths['region_path'], folders[v['new']])
-    paths['file_path'] = file_path
-    
-    list_files = os.listdir(paths['file_path'])
-    file = widgets.Dropdown(options=[list_files[n] for n in range(len(list_files))],
-                            value = None,
-                            description='files:',)
-    
-    file.observe(file_on_change, names='value')
-    
-    top_box = HBox([date, file])
-
-    vbox = VBox([region, top_box])
-    visualization.children = [vbox, RGB_image, animation]
-    user_interface.children = [ingestion, status, visualization]
-    display(user_interface)
 
     
 def region_on_change(v):
@@ -402,50 +383,31 @@ def region_on_change(v):
     
     region_path = os.path.join(path, v['new'])
     paths['region_path'] = region_path
-    
-    list_folders = os.listdir(region_path)
         
-    folders = {}
-    for f in list_folders:
-        if f.startswith('LC'):
-            year = f[9:13]
-            day = f[13:16]
-            date = datetime.datetime.strptime('{} {}'.format(year, day), '%Y %j')
-            date = date.strftime('%d/%m/%Y')
-            folders[date] = f
-        elif f.startswith('S2'):
-            date = datetime.datetime.strptime(f[11:19], '%Y%m%d').strftime('%m/%d/%Y')
-            folders[date] = f
+    list_files = names = [os.path.basename(x) for x in glob.glob("{}/*.nc".format(paths['region_path']))]
+    list_files.sort()
     
-    list_dates = list(folders.keys())
-    date = widgets.Dropdown(options=[list_dates[n] for n in range(len(list_dates))],
+    file = widgets.Dropdown(options=[list_files[n] for n in range(len(list_files))],
                             value = None,
-                            description='Dates:',)
+                            description='files:',)
     
-    date.observe(date_on_change, names='value')
+    file.observe(file_on_change, names='value')
     
-#    with output_band:
-    
-    hbox = HBox([region, date])
-    visualization.children = [hbox, RGB_image, animation]
+    top_box = HBox([file])
+
+    vbox = VBox([region, top_box])
+    visualization.children = [vbox, RGB_image, animation]
     user_interface.children = [ingestion, status, visualization]
     display(user_interface)
     
-#    with output_RGB:
-#        
-#        hbox = HBox([region, date])
-#        visualization.children = [Band, hbox, animation]
-#        user_interface.children = [ingestion, status, visualization]
-#        display(user_interface)
-    
 #################################################################################
     
-def Monochromatic_band(reg):
+def Monochromatic_band(regions):
     
     global region
         
     #Drop down to choose the available region
-    region = widgets.Dropdown(options=[reg[n] for n in range(len(reg))],
+    region = widgets.Dropdown(options=[regions[n] for n in range(len(regions))],
                               value = None,
                               description='Available Regions:',)
 
@@ -455,13 +417,13 @@ def Monochromatic_band(reg):
     return vbox
 
 
-def RGB(reg):
+def RGB(regions):
     
     global region
         
     #Inicialización de widgets del menu
     #widgets para escoger region
-    region = widgets.Dropdown(options=[reg[n] for n in range(len(reg))],
+    region = widgets.Dropdown(options=[regions[n] for n in range(len(regions))],
                               value = None,
                               description='Available Regions:',)
     
@@ -471,11 +433,11 @@ def RGB(reg):
     return vbox
 
 
-def clip(reg):
+def clip(regions):
             
     #Inicialización de widgets del menu
     #widgets para escoger region
-    region = widgets.Dropdown(options=[reg[n] for n in range(len(reg))],
+    region = widgets.Dropdown(options=[regions[n] for n in range(len(regions))],
                               value = None,
                               description='Available Regions:',)
 
@@ -490,11 +452,17 @@ def data_visualization():
     global visualization, Band, RGB_image, animation
     clear_output()
     
-    reg = os.listdir(paths['main_path'])
+    #reg = os.listdir(paths['main_path'])
     
-    Band = Monochromatic_band(reg)
-    RGB_image = RGB(reg)
-    animation = clip(reg)
+    #load available regions
+    with open('regions.json') as data_file:
+        regions_file = json.load(data_file)
+    
+    regions = list(regions_file.keys())
+    
+    Band = Monochromatic_band(regions)
+    RGB_image = RGB(regions)
+    animation = clip(regions)
     
     #Menu
     visualization = widgets.Tab()
