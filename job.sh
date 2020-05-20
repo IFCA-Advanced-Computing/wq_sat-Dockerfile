@@ -1,5 +1,4 @@
-env
-mkdir -p /onedata/output
+mkdir -p "$ONEDATA_MOUNT_POINT"
 
 ONECLIENT_AUTHORIZATION_TOKEN="$INPUT_ONEDATA_TOKEN" ONECLIENT_PROVIDER_HOSTNAME="$ONEDATA_PROVIDERS" oneclient --no_check_certificate --authentication token -o rw "$ONEDATA_MOUNT_POINT" || exit 1
 
