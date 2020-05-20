@@ -53,16 +53,20 @@ RUN cd ./wq_sat && \
 
 ## Create config file
 RUN exec 3<> ./wq_sat/sat/sat_modules/config.py && \
+    echo "import os" >&3 && \
+    echo "" >&3 && \
     echo "#Onedata config" >&3 && \
     echo "onedata_mode = 1" >&3 && \
-    echo "onedata_token = \"$ONEDATA_TOKEN\"" >&3 && \
-    echo "onedata_url = \"https://vm027.pub.cloud.ifca.es\"" >&3 && \
+    echo "onedata_token = os.environ[\"INPUT_ONEDATA_TOKEN\"]" >&3 && \
+    echo "onedata_url = \"https://{}\".format(os.environ[\"ONEDATA_PROVIDERS\"])" >&3 && \
     echo "onedata_api = \"/api/v3/oneprovider/\"" >&3 && \
-    echo "onedata_user = \"user\"" >&3 && \
-    echo "onedata_space = \"XDC_LifeWatch\"" >&3 && \
-    echo "datasets_path = \"/onedata/output/XDC_LifeWatch\"" >&3 && \
+    echo "onedata_space = os.environ[\"ONEDATA_SPACE\"]" >&3 && \
+    echo "onedata_mount_point = os.environ[\"ONEDATA_MOUNT_POINT\"]" >&3 && \
+    echo "datasets_path = os.path.join(onedata_mount_point, onedata_space)" >&3 && \
+    echo "" >&3 && \
     echo "#Sentinel credentials" >&3 && \
     echo "sentinel_pass = {'username':\"lifewatch\", 'password':\"xdc_lfw_data\"}" >&3 && \
+    echo "" >&3 && \
     echo "#Landsat credentials" >&3 && \
     echo "landsat_pass = {'username':\"lifewatch\", 'password':\"xdc_lfw_data2018\"}" >&3 && \
     exec 3>&-
