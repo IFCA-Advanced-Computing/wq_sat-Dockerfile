@@ -42,8 +42,6 @@ RUN apt-get install oneclient=19.02.1-1~xenial -y
 ## GitHUB Repositories
 RUN mkdir wq_sat
 
-RUN ls
-
 # What user branch to clone (!)
 ARG branch=master
 
