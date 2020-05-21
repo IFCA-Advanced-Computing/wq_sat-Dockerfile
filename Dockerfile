@@ -15,7 +15,7 @@ LABEL version='0.0.1'
 RUN  apt-get update && \
   apt-get install -y --reinstall build-essential && \
     apt-get install -y git && \
-    apt-get install -y curl python3-setuptools python3-pip python3-wheel
+    apt-get install -y curl wget python3-setuptools python3-pip python3-wheel
 
 
 ## Install spatial packages (python APIs)
@@ -41,6 +41,8 @@ RUN apt-get install oneclient=19.02.1-1~xenial -y
 
 ## GitHUB Repositories
 RUN mkdir wq_sat
+
+RUN ls
 
 # What user branch to clone (!)
 ARG branch=master
@@ -90,3 +92,10 @@ RUN cd ./wq_sat && \
 # clone and Install atcor package
 RUN cd ./wq_sat && \
     git clone -b $branch https://github.com/garciadd/wq_server.git
+
+# Download views to onedata
+RUN cd ./wq_sat && \
+    mkdir views && \
+    cd ./views && \
+    wget https://raw.githubusercontent.com/extreme-datacloud/xdc_lfw_frontend/master/views/view_filename.js && \
+    wget https://raw.githubusercontent.com/extreme-datacloud/xdc_lfw_frontend/master/views/view_dates_landsat.js 
