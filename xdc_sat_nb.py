@@ -6,7 +6,6 @@ Date: August 2018
 """
 #APIs
 import os
-import glob
 import requests
 import argparse
 import json
@@ -27,7 +26,7 @@ from IPython.display import display
 from IPython.display import clear_output
 
 def get_coordinates(coord):
-
+            
     W = np.round(coord[0][0] - 360, 3)
     S = np.round(coord[0][-1], 3)
     E = np.round(coord[2][0] - 360, 3)
@@ -39,10 +38,29 @@ def get_coordinates(coord):
 
     return coordinates
 
+def load_regions():
+    
+    if os.path.isfile('regions.json'):
+        
+        #load the downloaded files
+        with open('regions.json') as file:
+            regions = json.load(file)
+    
+    else:
+        regions = {"CdP":{"coordinates":{"W":-2.83, "S":41.82, "E":-2.67, "N":41.90}}, 
+                   "Ebro":{"coordinates":{"W": -4.132, "S": 42.968, "E": -3.824, "N": 43.06}}, 
+                   "ElVal":{"coordinates":{"W":-1.802, "S":41.875, "E":-1.791, "N":41.881}}}
+        
+        with open('regions.json', 'w') as file:
+            json.dump(regions, file, indent=4)
+            
+    return regions
 
 def get_access_token(url):
+    
     if url is None:
         url = 'https://iam.extreme-datacloud.eu/token'
+    
     #TODO manage exceptions
     access_token = os.environ['OAUTH2_AUTHORIZE_TOKEN']
     refresh_token = os.environ['OAUTH2_REFRESH_TOKEN']
@@ -50,13 +68,21 @@ def get_access_token(url):
     IAM_CLIENT_ID = os.environ['IAM_CLIENT_ID']
     IAM_CLIENT_SECRET = os.environ['IAM_CLIENT_SECRET']
 
-    data = {'refresh_token': refresh_token, 'grant_type': 'refresh_token', 'client_id':IAM_CLIENT_ID, 'client_secret':IAM_CLIENT_SECRET}
+    data = {'refresh_token': refresh_token, 
+            'grant_type': 'refresh_token', 
+            'client_id':IAM_CLIENT_ID, 
+            'client_secret':IAM_CLIENT_SECRET}
+    
     headers = {'Content-Type': 'application/json'}
-    url = url+"?grant_type=refresh_token&refresh_token="+refresh_token+'&client_id='+IAM_CLIENT_ID+'&client_secret='+IAM_CLIENT_SECRET
+    url = url + "?grant_type=refresh_token&refresh_token="
+    url = url + refresh_token + '&client_id='
+    url = url + IAM_CLIENT_ID + '&client_secret=' + IAM_CLIENT_SECRET
+    url = url + "&scope=openid email profile offline_access fts:submit-transfer"
 
     r = requests.post(url, headers=headers) #GET token
-    print("Rquesting access token: %s" % r.status_code) #200 means that the resource exists
+    print("Requesting access token: %s" % r.status_code) #200 means that the resource exists
     access_token = json.loads(r.content)['access_token']
+    
     return access_token
 
 
@@ -64,42 +90,40 @@ def launch_orchestrator_sat_job(sat_args):
 
     access_token = get_access_token('https://iam.extreme-datacloud.eu/token')
     headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer '+access_token}
-    tosca_file = '.SAT_DATA.yml'
+    tosca_file = '.SAT_DATA_D.yml'
 
     with open(tosca_file, 'r') as myfile:
         tosca = myfile.read()
-
+    
     sat = json.dumps(sat_args)
     sat = sat.replace(" ", "")
-
-    data = {"parameters" : {   
+    
+    data = {"parameters" : {
                 "cpus" : 1,
                 "mem" : "8192 MB",
                 "onedata_provider" : "vm027.pub.cloud.ifca.es",
-                "sat_space_name" : "XDC_LifeWatch",
+                "onedata_zone" : "https://onezone.cloud.cnaf.infn.it",
+                "onedata_sat_space" : "XDC_LifeWatch",
+                "onedata_mount_point": "/mnt/onedata",
                 "sat_args" : sat,
                 "region" : sat_args['region'],
                 "start_date" : sat_args['start_date'],
-                "end_date" : sat_args['end_date'],
-                "onedata_zone" : "https://onezone.cloud.cnaf.infn.it"
+                "end_date" : sat_args['end_date']
                  },
             "template" : tosca
             }
-    print (data)
+    print ('search parameters: {}'.format(data))
 
     url = 'https://xdc-paas.cloud.ba.infn.it/orchestrator/deployments/'
     r = requests.post(url, headers=headers,data=json.dumps(data)) #GET
     print("Status code SAT: %s" % r.status_code) #200 means that the resource exists
     print(r.headers)
     txt = json.loads(r.text)
-    print ('txt: {}'.format(txt))
     print (json.dumps(txt, indent=2, sort_keys=True))
-#    #print(r.text)
-#    #print(r.reason)
     deployment_id = json.loads(r.content)['uuid']
     print("Deployment ID: %s" % deployment_id)
     return deployment_id
-
+    
 def orchestrator_job_status(deployment_id):
     #TODO manage exceptions
     access_token = get_access_token('https://iam.extreme-datacloud.eu/token')
@@ -114,39 +138,17 @@ def orchestrator_job_status(deployment_id):
     return r.content
 
 def orchestrator_list_deployments(orchestrator_url):
+    
     #TODO manage exceptions
     access_token = get_access_token('https://iam.extreme-datacloud.eu/token')
+    
     if orchestrator_url is None:
         orchestrator_url = 'https://xdc-paas.cloud.ba.infn.it/orchestrator/'
-
-    url = orchestrator_url + 'deployments?createdBy=' + os.environ['JUPYTERHUB_USER'] + '@https://iam.extreme-datacloud.eu/'
+    
+    url = orchestrator_url + 'deployments'
     headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer '+access_token}
     r = requests.get(url, headers=headers) #GET
     return json.loads(r.content)['content']
-
-
-def find_dataset_type(start_date,end_date,typ,onedata_token):
-
-    access_token = get_access_token('https://iam.extreme-datacloud.eu/token')
-
-    headers = {"X-Auth-Token": onedata_token}
-    url = 'https://cloud-90-147-75-163.cloud.ba.infn.it/api/v3/oneprovider/spaces/17d670040b30511bc4848cab56449088'
-    r = requests.get(url, headers=headers)
-    space_id = json.loads(r.content)['spaceId']
-    print('Onedata space ID: %s' % space_id)
-    index_name = 'region_type__query'
-    onedata_cdmi_api = 'https://cloud-90-147-75-163.cloud.ba.infn.it/cdmi/cdmi_objectid/'
-    url = 'https://cloud-90-147-75-163.cloud.ba.infn.it/api/v3/oneprovider/spaces/'+space_id+'/indexes/'+index_name+'/query'
-    r = requests.get(url, headers=headers)
-    response = json.loads(r.content)
-    result = []
-    for e in response:
-        if typ in e['key']['dataset']:
-            print(e['key']['dataset'])
-            if check_date(start_date,end_date,e['key']['beginDate'], e['key']['endDate']):
-                print({'beginDate': e['key']['beginDate'], 'endDate': e['key']['endDate'], 'file':e['key']['dataset']})
-                result.append({'beginDate': e['key']['beginDate'], 'endDate': e['key']['endDate'], 'file':e['key']['dataset']})
-    return result
 
 ############################## MENU ##################################
 
@@ -213,25 +215,24 @@ mapgrid[:, 0], mapgrid[:, 1] = m, tab
 def namebutton_clicked(namebutton):
 
     #load the downloaded files
-    with open('regions.json') as file:
-        regions = json.load(file)
-
-    if name.value in regions:
-
+    regions = load_regions()
+    
+    if name.value in list(regions.keys()):
+        
         coord = regions[name.value]["coordinates"]
-
+        
         inidate = (ini_date.value).strftime('%Y-%m-%d')
         enddate = (end_date.value).strftime('%Y-%m-%d')
-
+            
         sat_args ={"start_date":inidate,
                    "end_date":enddate,
                    "region":name.value,
                    "coordinates":coord,
                    "cloud":cloud.value,
                    "sat_type":satellite.value}
-
+        
         launch_orchestrator_sat_job(sat_args)
-
+    
     else:
 
         ingestion = VBox(children=[mapgrid, out])
@@ -240,12 +241,12 @@ def namebutton_clicked(namebutton):
 namebutton.on_click(namebutton_clicked)
 
 def mapbutton_clicked(mapbutton):
-
+    
     coord = get_coordinates(draw_control.last_draw['geometry']['coordinates'][0])
 
     inidate = (ini_date.value).strftime('%Y-%m-%d')
     enddate = (end_date.value).strftime('%Y-%m-%d')
-
+            
     sat_args ={"start_date":inidate,
                "end_date":enddate,
                "region":name.value,
@@ -254,7 +255,7 @@ def mapbutton_clicked(mapbutton):
                "sat_type":satellite.value}
 
     launch_orchestrator_sat_job(sat_args)
-
+    
 mapbutton.on_click(mapbutton_clicked)
 
 ######################################
@@ -294,8 +295,8 @@ status = VBox(children=[selection_jobs, button2, out2])
 
 ######################################## Utils ##########################################
 
-path = '/home/jovyan/onedata/output/XDC_LifeWatch'
-
+path = '/home/jovyan/datasets/XDC_LifeWatch'
+        
 paths = {'main_path': path}
 
 ##################################### Functions for display Monochromatic band #########################################
@@ -337,18 +338,16 @@ def file_on_change(v):
     global out_plot
     clear_output()
     
-    list_files = names = [os.path.basename(x) for x in glob.glob("{}/*.nc".format(paths['region_path']))]
-    list_files.sort()
-    
+    list_files = os.listdir(paths['file_path'])
     file = widgets.Dropdown(options=[list_files[n] for n in range(len(list_files))],
                             value = v['new'],
                             description='files:',)
     
     file.observe(file_on_change, names='value')
     
-    top_box = HBox([file])
+    top_box = HBox([date, file])
         
-    band_path = os.path.join(paths['region_path'], v['new'])    
+    band_path = os.path.join(paths['file_path'], v['new'])    
     paths['band_path'] = band_path
     
     dataset= Dataset(paths['band_path'], 'r', format='NETCDF4_CLASSIC')
@@ -374,6 +373,28 @@ def file_on_change(v):
     visualization.children = [vbox, RGB_image, animation]
     user_interface.children = [ingestion, status, visualization]
     display(user_interface)
+    
+
+def date_on_change(v):
+    
+    clear_output()
+    
+    file_path = os.path.join(paths['region_path'], folders[v['new']])
+    paths['file_path'] = file_path
+    
+    list_files = os.listdir(paths['file_path'])
+    file = widgets.Dropdown(options=[list_files[n] for n in range(len(list_files))],
+                            value = None,
+                            description='files:',)
+    
+    file.observe(file_on_change, names='value')
+    
+    top_box = HBox([date, file])
+
+    vbox = VBox([region, top_box])
+    visualization.children = [vbox, RGB_image, animation]
+    user_interface.children = [ingestion, status, visualization]
+    display(user_interface)
 
     
 def region_on_change(v):
@@ -383,31 +404,50 @@ def region_on_change(v):
     
     region_path = os.path.join(path, v['new'])
     paths['region_path'] = region_path
+    
+    list_folders = os.listdir(region_path)
         
-    list_files = names = [os.path.basename(x) for x in glob.glob("{}/*.nc".format(paths['region_path']))]
-    list_files.sort()
+    folders = {}
+    for f in list_folders:
+        if f.startswith('LC'):
+            year = f[9:13]
+            day = f[13:16]
+            date = datetime.datetime.strptime('{} {}'.format(year, day), '%Y %j')
+            date = date.strftime('%d/%m/%Y')
+            folders[date] = f
+        elif f.startswith('S2'):
+            date = datetime.datetime.strptime(f[11:19], '%Y%m%d').strftime('%m/%d/%Y')
+            folders[date] = f
     
-    file = widgets.Dropdown(options=[list_files[n] for n in range(len(list_files))],
+    list_dates = list(folders.keys())
+    date = widgets.Dropdown(options=[list_dates[n] for n in range(len(list_dates))],
                             value = None,
-                            description='files:',)
+                            description='Dates:',)
     
-    file.observe(file_on_change, names='value')
+    date.observe(date_on_change, names='value')
     
-    top_box = HBox([file])
-
-    vbox = VBox([region, top_box])
-    visualization.children = [vbox, RGB_image, animation]
+#    with output_band:
+    
+    hbox = HBox([region, date])
+    visualization.children = [hbox, RGB_image, animation]
     user_interface.children = [ingestion, status, visualization]
     display(user_interface)
     
+#    with output_RGB:
+#        
+#        hbox = HBox([region, date])
+#        visualization.children = [Band, hbox, animation]
+#        user_interface.children = [ingestion, status, visualization]
+#        display(user_interface)
+    
 #################################################################################
     
-def Monochromatic_band(regions):
+def Monochromatic_band(reg):
     
     global region
         
     #Drop down to choose the available region
-    region = widgets.Dropdown(options=[regions[n] for n in range(len(regions))],
+    region = widgets.Dropdown(options=[reg[n] for n in range(len(reg))],
                               value = None,
                               description='Available Regions:',)
 
@@ -417,13 +457,13 @@ def Monochromatic_band(regions):
     return vbox
 
 
-def RGB(regions):
+def RGB(reg):
     
     global region
         
     #Inicialización de widgets del menu
     #widgets para escoger region
-    region = widgets.Dropdown(options=[regions[n] for n in range(len(regions))],
+    region = widgets.Dropdown(options=[reg[n] for n in range(len(reg))],
                               value = None,
                               description='Available Regions:',)
     
@@ -433,11 +473,11 @@ def RGB(regions):
     return vbox
 
 
-def clip(regions):
+def clip(reg):
             
     #Inicialización de widgets del menu
     #widgets para escoger region
-    region = widgets.Dropdown(options=[regions[n] for n in range(len(regions))],
+    region = widgets.Dropdown(options=[reg[n] for n in range(len(reg))],
                               value = None,
                               description='Available Regions:',)
 
@@ -452,17 +492,13 @@ def data_visualization():
     global visualization, Band, RGB_image, animation
     clear_output()
     
-    #reg = os.listdir(paths['main_path'])
+    #load the downloaded files
+    regions = load_regions()
+    reg = list(regions.keys())
     
-    #load available regions
-    with open('regions.json') as data_file:
-        regions_file = json.load(data_file)
-    
-    regions = list(regions_file.keys())
-    
-    Band = Monochromatic_band(regions)
-    RGB_image = RGB(regions)
-    animation = clip(regions)
+    Band = Monochromatic_band(reg)
+    RGB_image = RGB(reg)
+    animation = clip(reg)
     
     #Menu
     visualization = widgets.Tab()
