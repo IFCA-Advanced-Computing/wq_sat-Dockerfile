@@ -15,6 +15,9 @@ import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 
+#Subfunctions
+import utils_plot
+
 #Map
 from ipyleaflet import Map, basemaps, basemap_to_tiles, DrawControl
 
@@ -299,20 +302,22 @@ path = '/home/jovyan/datasets/XDC_LifeWatch'
         
 paths = {'main_path': path}
 
-##################################### Functions for display Monochromatic band #########################################
+##################################### Plot Functions #########################################
 
-def plot_on_change(v):
+def band_on_change(v):
 
-    dataset= Dataset(paths['band_path'], 'r', format='NETCDF4_CLASSIC')
-    data = dataset[v['new']][:]
+    dataset= Dataset(paths['file_path'], 'r', format='NETCDF4_CLASSIC')
+    band = bands_desc[v['new']]
+    data = dataset[band][:]
     vmin, vmax, mean, std = np.amin(data), np.amax(data), np.mean(data), np.std(data)
-    stats = "STATS; min = {}, Max = {}, mean = {}, std = {}".format(vmin, vmax, mean, std)
-    
-    plt.figure(figsize=(7,7))
+    stats = "min = {}, Max = {}".format(vmin, vmax)
+    stats2 = "mean = {}, std = {}".format(mean, std)
     
     with out_plot:
         
         clear_output()
+        
+        plt.figure(figsize=(7,7))
         
         # Plot the image
         plt.imshow(data, vmin=vmin, vmax=vmax, cmap='Greys')
@@ -327,73 +332,171 @@ def plot_on_change(v):
 
         # Add a title
         plt.title('{}'.format(v['new']), fontweight='bold', fontsize=10, loc='left')
-        plt.suptitle(stats, x=0.92, y=0.92, fontsize='large')
+        plt.suptitle(stats, x=0.90, y=0.90, fontsize='large')
+        plt.suptitle(stats2, x=0.95, y=0.95, fontsize='large')
         
         # Show the image
         plt.show()        
-
         
-def file_on_change(v):
+def index_on_change(v):
     
-    global out_plot
+    band_dict = utils_plot.load_bands(paths['file_path'], bands_desc)
+   
+    if file.startswith('LC'):    
+        arr_index = utils_plot.landsat_wq(band_dict, v['new'])
+    
+    elif file.startswith('S2'):
+        arr_index = utils_plot.sentinel_wq(band_dict, v['new'])
+        
+    vmin, vmax, mean, std = np.amin(arr_index), np.amax(arr_index), np.mean(arr_index), np.std(arr_index)
+    stats = "min = {}, Max = {}".format(vmin, vmax)
+    stats2 = "mean = {}, std = {}".format(mean, std)
+    
+    with out_plot:
+        
+        clear_output()
+        
+        plt.figure(figsize=(7,7))
+        
+        # Plot the image
+        plt.imshow(arr_index, vmin=vmin, vmax=vmax, cmap='Greys')
+
+        # Add a colorbar
+        plt.colorbar(label='Brightness', extend='both', orientation='vertical', pad=0.05, fraction=0.05)
+
+        # Title axis
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+        plt.tick_params(axis='both', which='both', bottom=False, top=False, right=False, left=False, labelbottom=False, labelleft=False)
+
+        # Add a title
+        plt.title('{}'.format(v['new']), fontweight='bold', fontsize=10, loc='left')
+        plt.suptitle(stats, x=0.90, y=0.90, fontsize='large')
+        plt.suptitle(stats2, x=0.95, y=0.95, fontsize='large')
+        
+        # Show the image
+        plt.show()
+    
+    
+        
+def date_on_change(v):
+    
+    global out_plot, bands_desc, file   
+    
     clear_output()
     
-    list_files = os.listdir(paths['file_path'])
-    file = widgets.Dropdown(options=[list_files[n] for n in range(len(list_files))],
-                            value = v['new'],
-                            description='files:',)
+    file = str(folders[v['new']])
+    file_path = os.path.join(paths['region_path'], file)
+    paths['file_path'] = file_path
     
-    file.observe(file_on_change, names='value')
-    
-    top_box = HBox([date, file])
+    if file.startswith('LC'):
+                
+        bands_desc = {'B1 [435nm-451nm]':'SRB1',
+                     'B2 Blue [452nm-512nm]':'SRB2',
+                     'B3 Green [533nm-590nm]':'SRB3',
+                     'B4 Red [636nm-673nm]':'SRB4',
+                     'B5 [851nm-879nm]':'SRB5',
+                     'B6 [1566nm-1651nm]':'SRB6',
+                     'B7 [2107nm-2294nm]':'SRB7',
+                     'B8 [503nm-676nm]':'B8',
+                     'B9 [1363nm-1384nm]':'SRB9',
+                     'B10 [1060nm-1119nm]':'SRB10',
+                     'B11 [1150nm-1251nm]':'SRB11'}
         
-    band_path = os.path.join(paths['file_path'], v['new'])    
-    paths['band_path'] = band_path
+        index_list = ['chl', 'Turb', 'Temp']
+        
+    elif file.startswith('S2'):
+        
+        bands_desc = {'B1 [443 nm]':'SRB1',
+                     'B2 Blue [490 nm]':'B2',
+                     'B3 Green [560 nm]':'B3',
+                     'B4 Red [665 nm]':'B4',
+                     'B5 [705 nm]':'SRB5',
+                     'B6 [740 nm]':'SRB6',
+                     'B7 [783 nm]':'SRB7',
+                     'B8 [842 nm]':'B8',
+                     'B8A [865 nm]':'SRB8A',
+                     'B9 [945 nm]':'SRB9',
+                     'B10 [1375 nm]':'SRB10',
+                     'B11 [1610 nm]':'SRB11',
+                     'B12 [2190 nm]':'SRB12'}
+        
+        index_list = ['chl', 'Turb']
     
-    dataset= Dataset(paths['band_path'], 'r', format='NETCDF4_CLASSIC')
-    variables = dataset.variables
-    variables = list(variables.keys())
+    bands = list(bands_desc.keys())
     
-    var = []
-    for e in variables:
-        if e not in ('lat', 'lon', 'spatial_ref'):
-            var.append(e)
+    b = widgets.ToggleButtons(options=[bands[n] for n in range(len(bands))],
+                              description='Raw Bands',
+                              value = None,
+                              button_style='',)
     
-    bands = widgets.ToggleButtons(options=[var[n] for n in range(len(var))],
-                                  description='Bands:',
+    b.observe(band_on_change, names='value')
+    
+    R = widgets.Dropdown(options=[bands[n] for n in range(len(bands))],
+                         value=bands[0],
+                         description='R',
+                         disabled=False,)
+    
+    G = widgets.Dropdown(options=[bands[n] for n in range(len(bands))],
+                         value=bands[0],
+                         description='G',
+                         disabled=False,)
+    
+    B = widgets.Dropdown(options=[bands[n] for n in range(len(bands))],
+                         value=bands[0],
+                         description='B',
+                         disabled=False,)
+    
+    RGB_button = widgets.Button(description='RGB Plot',)
+    
+    @RGB_button.on_click
+    def RGB_on_click(b):
+        with out_plot:
+            clear_output()
+            
+            dataset= Dataset(paths['file_path'], 'r', format='NETCDF4_CLASSIC')            
+            arr_R = dataset[bands_desc[R.value]][:]            
+            arr_G = dataset[bands_desc[G.value]][:]            
+            arr_B = dataset[bands_desc[B.value]][:]
+            
+            RGB_image = utils_plot.color_composite(arr_R, arr_G, arr_B)
+            
+            # Plot the image
+            plt.figure(figsize=(7,7))
+            plt.imshow(RGB_image)
+
+            # Title axis
+            plt.xlabel('Longitude')
+            plt.ylabel('Latitude')
+            plt.tick_params(axis='both', which='both', bottom=False, top=False, right=False, left=False, labelbottom=False, labelleft=False)
+
+            # Show the image
+            plt.show()
+            
+        
+    index = widgets.ToggleButtons(options=index_list,
+                                  description='index',
                                   value = None,
                                   button_style='',)
     
-    bands.observe(plot_on_change, names='value')
-    
+    index.observe(index_on_change, names='value')
+        
     out_plot = widgets.Output()
     
-    bottom_box = HBox([bands])
-    vbox = VBox([region, top_box, bottom_box, out_plot])
-    visualization.children = [vbox, RGB_image, animation]
-    user_interface.children = [ingestion, status, visualization]
-    display(user_interface)
+    RGBbox = VBox([R, G, B, RGB_button])
     
+    #Create grid to fill it in with widgets
+    select_grid = GridspecLayout(2, 2)
+    select_grid[0, :], select_grid[1, 0], select_grid[1,1] = b, RGBbox, index
+    
+    #Create grid to fill it in with widgets
+    main_grid = GridspecLayout(2, 1)
+    main_grid[0, 0], main_grid[1, 0] = select_grid, out_plot
+   
+    top_box = HBox([region, date])
+    main_box = VBox([top_box, main_grid])
 
-def date_on_change(v):
-    
-    clear_output()
-    
-    file_path = os.path.join(paths['region_path'], folders[v['new']])
-    paths['file_path'] = file_path
-    
-    list_files = os.listdir(paths['file_path'])
-    file = widgets.Dropdown(options=[list_files[n] for n in range(len(list_files))],
-                            value = None,
-                            description='files:',)
-    
-    file.observe(file_on_change, names='value')
-    
-    top_box = HBox([date, file])
-
-    vbox = VBox([region, top_box])
-    visualization.children = [vbox, RGB_image, animation]
-    user_interface.children = [ingestion, status, visualization]
+    user_interface.children = [ingestion, status, main_box]
     display(user_interface)
 
     
@@ -425,97 +528,40 @@ def region_on_change(v):
                             description='Dates:',)
     
     date.observe(date_on_change, names='value')
-    
-#    with output_band:
-    
+        
     hbox = HBox([region, date])
-    visualization.children = [hbox, RGB_image, animation]
-    user_interface.children = [ingestion, status, visualization]
+    user_interface.children = [ingestion, status, hbox]
     display(user_interface)
-    
-#    with output_RGB:
-#        
-#        hbox = HBox([region, date])
-#        visualization.children = [Band, hbox, animation]
-#        user_interface.children = [ingestion, status, visualization]
-#        display(user_interface)
-    
-#################################################################################
-    
-def Monochromatic_band(reg):
-    
-    global region
-        
-    #Drop down to choose the available region
-    region = widgets.Dropdown(options=[reg[n] for n in range(len(reg))],
-                              value = None,
-                              description='Available Regions:',)
-
-    region.observe(region_on_change, names='value')
-    vbox = VBox([region]) 
-    
-    return vbox
-
-
-def RGB(reg):
-    
-    global region
-        
-    #Inicialización de widgets del menu
-    #widgets para escoger region
-    region = widgets.Dropdown(options=[reg[n] for n in range(len(reg))],
-                              value = None,
-                              description='Available Regions:',)
-    
-    region.observe(region_on_change, names='value')
-    vbox = VBox([region]) 
-    
-    return vbox
-
-
-def clip(reg):
-            
-    #Inicialización de widgets del menu
-    #widgets para escoger region
-    region = widgets.Dropdown(options=[reg[n] for n in range(len(reg))],
-                              value = None,
-                              description='Available Regions:',)
-
-    vbox = VBox([region]) 
-    
-    return vbox
 
 #####################################################################################
 
 def data_visualization():
     
-    global visualization, Band, RGB_image, animation
+    global region
     clear_output()
     
     #load the downloaded files
     regions = load_regions()
-    reg = list(regions.keys())
+    regions = list(regions.keys())
     
-    Band = Monochromatic_band(reg)
-    RGB_image = RGB(reg)
-    animation = clip(reg)
+    #Inicialización de widgets del menu
+    #widgets para escoger region
+    region = widgets.Dropdown(options=[regions[n] for n in range(len(regions))],
+                              value = None,
+                              description='Available Regions:',)
+
+    region.observe(region_on_change, names='value')
+    vbox = VBox([region]) 
     
-    #Menu
-    visualization = widgets.Tab()
-    visualization.children = [Band, RGB_image, animation]
-    visualization.set_title(0, 'Monochromatic Band')
-    visualization.set_title(1, 'RGB image')
-    visualization.set_title(2, 'Animations')
-    
-    return visualization
+    return vbox
 
 
-visualization = data_visualization()
+wq_sat = data_visualization()
     
 #Menu
 user_interface = widgets.Tab()
-user_interface.children = [ingestion, status, visualization]
+user_interface.children = [ingestion, status, wq_sat]
 user_interface.set_title(0,'Data Ingestion')
 user_interface.set_title(1,'Job status')
-user_interface.set_title(2, 'Data Visualization')
+user_interface.set_title(2, 'Wq Satellite')
 user_interface
